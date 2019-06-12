@@ -53,18 +53,22 @@
             <div
                     class="input"
                     v-for="(hobbyInput, index) in hobbyInputs"
+                    :class="{invalid : $v.hobbyInputs.$each[index].$error}"
                     :key="hobbyInput.id">
               <label :for="hobbyInput.id">Hobby #{{ index }}</label>
               <input
                       type="text"
                       :id="hobbyInput.id"
+                      @blur="$v.hobbyInputs.$each[index].value.$touch()"
                       v-model="hobbyInput.value">
               <button @click="onDeleteHobby(hobbyInput.id)" type="button">X</button>
             </div>
+            <p v-if="!$v.hobbyInputs.minLen">You have to specify at least {{ $v.hobbyInputs.$params.minLen.min }} hobbies.</p>
+            <p v-if="!$v.hobbyInputs.required">Please add hobbies.</p>
           </div>
         </div>
-        <div class="input inline">
-          <input type="checkbox" id="terms" v-model="terms">
+        <div :class="{invalid: $v.terms.$invalid}" class="input inline" >
+          <input type="checkbox" id="terms" @change="$v.terms.$touch()" v-model="terms">
           <label for="terms">Accept Terms of Use</label>
         </div>
         <div class="submit">
@@ -108,6 +112,21 @@
         sameAs: sameAs(vm => {
           return vm.password
         })
+      },
+      terms: {
+        required: requiredUnless(vm => {
+          return vm.country === 'germany'
+        })
+      },
+      hobbyInputs: {
+        required,
+        minLen: minLength(2),
+        $each: {
+          value: {
+            required,
+            minLen: minLength(5)
+          }
+        }
       }
     },
     methods: {
@@ -173,8 +192,8 @@
     border: 1px red solid;
     background-color: #ffc9aa;
   }
-  .input.invalid input {
-      color: 
+  .input.invalid input,  .input.invalid label {
+      color: red
    }
 
   .input.inline input {
